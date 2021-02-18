@@ -24,13 +24,13 @@ function getMysqlVersion()
 {
     if (extension_loaded('PDO_MYSQL')) {
         try {
-            $dbh = new PDO('mysql:host=mysql;dbname=mysql', 'root', '123456');
-            $sth = $dbh->query('SELECT VERSION() as version');
-            $info = $sth->fetch();
+            // $dbh = new PDO('mysql:host=10.93.192.205:3307;dbname=ad_lab', 'root', '123456');
+            // $sth = $dbh->query('SELECT VERSION() as version');
+            // $info = $sth->fetch();
         } catch (PDOException $e) {
             return $e->getMessage();
         }
-        return $info['version'];
+        // return $info['version'];
     } else {
         return 'PDO_MYSQL 扩展未安装 ×';
     }
