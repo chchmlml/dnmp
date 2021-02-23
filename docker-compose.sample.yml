@@ -209,6 +209,20 @@ services:
 #      - REDIS_1_PORT=6379
 #      - TZ=$TZ
 
+  # redisadmin:
+  #   build:
+  #     context: ./services/redisadmin
+  #   container_name: redisadmin
+  #   volumes:
+  #    - ${REDIS_ADMIN_CONF_FILE}:/conf/:rw
+  #   ports:
+  #    - "${REDIS_ADMIN_PORT}:8081"
+  #   restart: always
+  #   environment:
+  #    TZ: "$TZ"
+  #   networks:
+  #    - default
+
 #  mongodb:
 #    image: mongo:${MONGODB_VERSION}
 #    container_name: mongodb

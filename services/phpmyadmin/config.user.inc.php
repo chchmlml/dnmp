@@ -6,19 +6,15 @@ $cfg['blowfish_secret']='multiServerExample70518';
 
 $i = 0;
 
-$i++; // server 1 :
-$cfg['Servers'][$i]['verbose']   = 'docker';
-$cfg['Servers'][$i]['host']      = 'mysql';
-
-
+//不能用localhost，需要本机ip
 $i++;
 $cfg['Servers'][$i]['verbose']   = 'localhost docker';
-$cfg['Servers'][$i]['host']      = '127.0.0.1';
-$cfg['Servers'][$i]['port']      = '3305';
+$cfg['Servers'][$i]['host']      = '10.222.101.182';
+$cfg['Servers'][$i]['port']      = '3306';
 
 
 $i++;
-$cfg['Servers'][$i]['verbose']   = '10.93.192.205:3307';
-$cfg['Servers'][$i]['host']      = '10.93.192.205';
-$cfg['Servers'][$i]['port']      = '3307';
+$cfg['Servers'][$i]['verbose']   = '10.77.96.29:3308';
+$cfg['Servers'][$i]['host']      = '10.77.96.29';
+$cfg['Servers'][$i]['port']      = '3308';
 
