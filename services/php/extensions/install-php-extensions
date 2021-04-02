@@ -28,7 +28,7 @@ if test "$IPE_VERSION" = master && test "${CI:-}" != true; then
 #                                                                                                           #
 # You are using an unsupported method to get install-php-extensions!                                        #
 #                                                                                                           #
-# Please update the way you fetch it. Read the instrictions at                                              #
+# Please update the way you fetch it. Read the instructions at                                              #
 # https://github.com/mlocati/docker-php-extension-installer#usage                                           #
 #                                                                                                           #
 # For example, if you get this script by fetching                                                           #
@@ -355,8 +355,10 @@ checkRequiredModule() {
 sortModulesToInstall() {
 	# apcu_bc requires apcu
 	checkRequiredModule 'apcu_bc' 'apcu'
-	# http requires propro and raphf
-	checkRequiredModule 'http' 'propro'
+	# http requires propro (for PHP < 8) and raphf
+	if test $PHP_MAJMIN_VERSION -le 704; then
+		checkRequiredModule 'http' 'propro'
+	fi
 	checkRequiredModule 'http' 'raphf'
 	# Some module installation may use igbinary if available: move it before other modules
 	if stringInList 'igbinary' "$PHP_MODULES_TO_INSTALL"; then
@@ -514,12 +516,20 @@ buildRequiredPackageLists() {
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libgearman[0-9]*$"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libgearman-dev"
 				;;
+			geoip@alpine)
+				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent geoip"
+				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile geoip-dev"
+				;;
+			geoip@debian)
+				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libgeoip1[0-9]*$"
+				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libgeoip-dev"
+				;;
 			gettext@alpine)
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libintl"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile gettext-dev"
 				;;
 			gmagick@alpine)
-				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent graphicsmagick"
+				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent graphicsmagick libgomp"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile graphicsmagick-dev libtool"
 				;;
 			gmagick@debian)
@@ -534,11 +544,11 @@ buildRequiredPackageLists() {
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libgmp-dev"
 				;;
 			gnupg@alpine)
-				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_volatile gpgme"
+				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent gpgme"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile gpgme-dev"
 				;;
 			gnupg@debian)
-				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_volatile libgpgme[0-9]*$"
+				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libgpgme[0-9]*$"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libgpgme[0-9]*-dev"
 				;;
 			grpc@alpine)
@@ -697,11 +707,11 @@ buildRequiredPackageLists() {
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libaio[0-9]*$"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile unzip"
 				;;
-			odbc@alpine)
+			odbc@alpine | pdo_odbc@alpine)
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent unixodbc"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile unixodbc-dev"
 				;;
-			odbc@debian)
+			odbc@debian | pdo_odbc@debian)
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libodbc1"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile unixodbc-dev"
 				;;
@@ -720,27 +730,11 @@ buildRequiredPackageLists() {
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libfbclient2"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile firebird-dev libib-util"
 				;;
-			pdo_odbc@alpine)
-				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent unixodbc"
-				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile unixodbc-dev"
-				;;
-			pdo_odbc@debian)
-				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libodbc1"
-				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile unixodbc-dev"
-				;;
-			pdo_pgsql@alpine)
+			pgsql@alpine | pdo_pgsql@alpine)
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent postgresql-libs"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile postgresql-dev"
 				;;
-			pdo_pgsql@debian)
-				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libpq5"
-				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libpq-dev"
-				;;
-			pgsql@alpine)
-				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent postgresql-libs"
-				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile postgresql-dev"
-				;;
-			pgsql@debian)
+			pgsql@debian | pdo_pgsql@debian)
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libpq5"
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libpq-dev"
 				;;
@@ -852,17 +846,8 @@ buildRequiredPackageLists() {
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libssh2-1-dev"
 				;;
 			swoole@alpine)
-				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent postgresql-libs libstdc++"
-				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile curl-dev postgresql-dev linux-headers"
-				case "$DISTRO_VERSION" in
-					alpine@3.7 | alpine@3.8)
-						# I can assure you I tried very hard to enable openssl in these Alpine versions...
-						;;
-					*)
-						buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent $buildRequiredPackageLists_libssl"
-						buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libressl-dev"
-						;;
-				esac
+				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent postgresql-libs libstdc++ $buildRequiredPackageLists_libssl"
+				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile curl-dev postgresql-dev linux-headers libressl-dev"
 				;;
 			swoole@debian)
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent libcurl3-gnutls libpq5"
@@ -882,6 +867,23 @@ buildRequiredPackageLists() {
 				;;
 			tdlib@debian)
 				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile git cmake gperf zlib1g-dev $buildRequiredPackageLists_libssldev"
+				;;
+			tensor@alpine)
+				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent lapack libexecinfo openblas"
+				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile lapack-dev libexecinfo-dev openblas-dev"
+				if test $DISTRO_MAJMIN_VERSION -le 310; then
+					if ! stringInList --force-overwrite "$IPE_APK_FLAGS"; then
+						IPE_APK_FLAGS="$IPE_APK_FLAGS --force-overwrite"
+					fi
+				fi
+				;;
+			tensor@debian)
+				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent liblapacke libopenblas-base"
+				buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile liblapack-dev libopenblas-dev liblapacke-dev"
+				if test $DISTRO_VERSION_NUMBER -ge 10; then
+					buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent gfortran-8"
+					buildRequiredPackageLists_volatile="$buildRequiredPackageLists_volatile libgfortran-8-dev"
+				fi
 				;;
 			tidy@alpine)
 				buildRequiredPackageLists_persistent="$buildRequiredPackageLists_persistent tidyhtml-libs"
@@ -1036,7 +1038,7 @@ expandPackagesToBeInstalled() {
 			resetIFS
 			;;
 		debian)
-			expandPackagesToBeInstalled_log="$(DEBIAN_FRONTEND=noninteractive apt-get install -sy $@ 2>&1 || printf '\nE: apt-get failed\n')"
+			expandPackagesToBeInstalled_log="$(DEBIAN_FRONTEND=noninteractive apt-get install -sy --no-install-recommends $@ 2>&1 || printf '\nE: apt-get failed\n')"
 			if test -n "$(printf '%s' "$expandPackagesToBeInstalled_log" | grep -E '^E:')"; then
 				printf 'FAILED TO LIST THE WHOLE PACKAGE LIST FOR\n' >&2
 				printf '%s ' "$@" >&2
@@ -1102,13 +1104,13 @@ setTargetTriplet() {
 #   The number of processors to be used
 getCompilationProcessorCount() {
 	case "$1" in
-		amqp | bcmath | bz2 | calendar | exif | gd | gettext | grpc | http | imagick | intl | mysqli | opcache | pcntl | pdo_mysql | protobuf | redis | soap | sockets | tidy | xdebug | xsl | yaml | zip)
-			# These extensions support parallel compilation
-			getProcessorCount
+		'')
+			# The above extensions don't support parallel compilation
+			echo 1
 			;;
 		*)
-			# We don't know - it's safer to disable parallel compilation
-			echo 1
+			# All the other extensions support parallel compilation
+			getProcessorCount
 			;;
 	esac
 }
@@ -1124,10 +1126,10 @@ installRequiredPackages() {
 
 	case "$DISTRO" in
 		alpine)
-			apk add $PACKAGES_PERSISTENT $PACKAGES_VOLATILE
+			apk add $IPE_APK_FLAGS $PACKAGES_PERSISTENT $PACKAGES_VOLATILE
 			;;
 		debian)
-			DEBIAN_FRONTEND=noninteractive apt-get install -qq -y $PACKAGES_PERSISTENT $PACKAGES_VOLATILE
+			DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -qq -y $PACKAGES_PERSISTENT $PACKAGES_VOLATILE
 			;;
 	esac
 }
@@ -1266,7 +1268,7 @@ installMicrosoftSqlServerODBC() {
 				DEBIAN_FRONTEND=noninteractive apt-get -q update
 			fi
 			printf -- '- installing the APT package\n'
-			DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get -qy install '^msodbcsql[0-9]+$'
+			DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get -qy --no-install-recommends install '^msodbcsql[0-9]+$'
 			;;
 	esac
 }
@@ -1364,7 +1366,7 @@ EOF
 					if ! test -d /tmp/src/firebird; then
 						mv "$(getPackageSource https://github.com/FirebirdSQL/firebird/releases/download/R2_5_9/Firebird-2.5.9.27139-0.tar.bz2)" /tmp/src/firebird
 						cd /tmp/src/firebird
-						#Patch rwlock.h (this has been fixed in later release of firebird 3.x)
+						# Patch rwlock.h (this has been fixed in later release of firebird 3.x)
 						sed -i '194s/.*/#if 0/' src/common/classes/rwlock.h
 						./configure --with-system-icu
 						# -j option can't be used: make targets must be compiled sequentially
@@ -1542,15 +1544,24 @@ installRemoteModule() {
 				ldconfig || true
 			fi
 			;;
+		csv)
+			if test -z "$installRemoteModule_version"; then
+				if test $PHP_MAJMIN_VERSION -le 704; then
+					installRemoteModule_version=0.3.1
+				fi
+			fi
+			;;
 		decimal)
 			case "$DISTRO" in
 				alpine)
-					installRemoteModule_src="$(getPackageSource https://codeload.github.com/bematech/libmpdec/tar.gz/master)"
-					cd -- "$installRemoteModule_src"
-					./configure CFLAGS='-w'
-					make -j$(getProcessorCount)
-					make install
-					cd - >/dev/null
+					if ! test -f /usr/local/lib/libmpdec.so; then
+						installRemoteModule_src="$(getPackageSource https://www.bytereef.org/software/mpdecimal/releases/mpdecimal-2.5.1.tar.gz)"
+						cd -- "$installRemoteModule_src"
+						./configure --disable-cxx
+						make -j$(getProcessorCount)
+						make install
+						cd - >/dev/null
+					fi
 					;;
 			esac
 			;;
@@ -1572,6 +1583,20 @@ installRemoteModule() {
 					fi
 					;;
 			esac
+			;;
+		geoip)
+			if test -z "$installRemoteModule_version"; then
+				installRemoteModule_version=beta
+			fi
+			;;
+		geospatial)
+			if test -z "$installRemoteModule_version"; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
+					installRemoteModule_version=0.2.1
+				else
+					installRemoteModule_version=beta
+				fi
+			fi
 			;;
 		gmagick)
 			if test -z "$installRemoteModule_version"; then
@@ -1616,7 +1641,7 @@ installRemoteModule() {
 			;;
 		igbinary)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=2.0.8
 				fi
 			fi
@@ -1657,23 +1682,23 @@ installRemoteModule() {
 			;;
 		mailparse)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=2.1.6
 				fi
 			fi
 			;;
 		memcache)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=2.2.7
-				elif test $PHP_MAJMIN_VERSION -lt 800; then
+				elif test $PHP_MAJMIN_VERSION -le 704; then
 					installRemoteModule_version=4.0.5.2
 				fi
 			fi
 			;;
 		memcached)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=2.2.0
 				fi
 			fi
@@ -1725,7 +1750,7 @@ installRemoteModule() {
 			;;
 		mosquitto)
 			if test -z "$installRemoteModule_version"; then
-				installRemoteModule_version=0.4.0
+				installRemoteModule_version=beta
 			fi
 			;;
 		msgpack)
@@ -1771,54 +1796,35 @@ installRemoteModule() {
 			;;
 		pcov)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 701; then
+				if test $PHP_MAJMIN_VERSION -le 700; then
 					installRemoteModule_version=0.9.0
 				fi
 			fi
 			;;
-		pdo_sqlsrv | sqlsrv)
-			if test -z "$installRemoteModule_version"; then
-				# https://docs.microsoft.com/it-it/sql/connect/php/system-requirements-for-the-php-sql-driver?view=sql-server-2017
-				if test $PHP_MAJMIN_VERSION -le 506; then
-					installRemoteModule_version=3.0.1
-				elif test $PHP_MAJMIN_VERSION -le 700; then
-					installRemoteModule_version=5.3.0
-				elif test $PHP_MAJMIN_VERSION -le 701; then
-					installRemoteModule_version=5.6.1
-				elif test $PHP_MAJMIN_VERSION -le 702; then
-					installRemoteModule_version=5.8.1
-				fi
-			fi
-			if ! isMicrosoftSqlServerODBCInstalled; then
-				installMicrosoftSqlServerODBC
-			fi
-			;;
 		propro)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=1.0.2
 				fi
 			fi
 			;;
 		protobuf)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=3.12.4
-				else
-					installRemoteModule_version=3.13.0
 				fi
 			fi
 			;;
 		pthreads)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=2.0.10
 				fi
 			fi
 			;;
 		raphf)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=1.1.2
 				fi
 			fi
@@ -1908,12 +1914,29 @@ installRemoteModule() {
 				fi
 			fi
 			;;
+		sqlsrv | pdo_sqlsrv)
+			if test -z "$installRemoteModule_version"; then
+				# https://docs.microsoft.com/it-it/sql/connect/php/system-requirements-for-the-php-sql-driver?view=sql-server-2017
+				if test $PHP_MAJMIN_VERSION -le 506; then
+					installRemoteModule_version=3.0.1
+				elif test $PHP_MAJMIN_VERSION -le 700; then
+					installRemoteModule_version=5.3.0
+				elif test $PHP_MAJMIN_VERSION -le 701; then
+					installRemoteModule_version=5.6.1
+				elif test $PHP_MAJMIN_VERSION -le 702; then
+					installRemoteModule_version=5.8.1
+				fi
+			fi
+			if ! isMicrosoftSqlServerODBCInstalled; then
+				installMicrosoftSqlServerODBC
+			fi
+			;;
 		ssh2)
 			if test -z "$installRemoteModule_version"; then
 				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=0.13
 				else
-					installRemoteModule_version=1.2
+					installRemoteModule_version=beta
 				fi
 			fi
 			;;
@@ -1936,13 +1959,13 @@ installRemoteModule() {
 			else
 				installRemoteModule_sockets=no
 			fi
+			installRemoteModule_openssl=yes
 			case "$DISTRO_VERSION" in
 				alpine@3.7 | alpine@3.8)
-					# I can assure you I tried very hard to enable openssl in these Alpine versions...
-					installRemoteModule_openssl=no
-					;;
-				*)
-					installRemoteModule_openssl=yes
+					if test -n "$installRemoteModule_version" && test $(compareVersions "$installRemoteModule_version" 4.6.0) -lt 0; then
+						# see https://github.com/swoole/swoole-src/issues/3934
+						installRemoteModule_openssl=no
+					fi
 					;;
 			esac
 			if test -z "$installRemoteModule_version" || test $(compareVersions "$installRemoteModule_version" 4.6.1) -ge 0; then
@@ -1973,7 +1996,7 @@ installRemoteModule() {
 				# enable mysqlnd support?
 				addConfigureOption enable-mysqlnd yes
 			elif test $(compareVersions "$installRemoteModule_version" 4.2.11) -ge 0; then
-				#enable sockets supports?
+				# enable sockets supports?
 				addConfigureOption enable-sockets $installRemoteModule_sockets
 				# enable openssl support?
 				addConfigureOption enable-openssl $installRemoteModule_openssl
@@ -1984,7 +2007,7 @@ installRemoteModule() {
 				# enable postgresql coroutine client support?
 				addConfigureOption enable-coroutine-postgresql yes
 			elif test $(compareVersions "$installRemoteModule_version" 4.2.7) -ge 0; then
-				#enable sockets supports?
+				# enable sockets supports?
 				addConfigureOption enable-sockets $installRemoteModule_sockets
 				# enable openssl support?
 				addConfigureOption enable-openssl $installRemoteModule_openssl
@@ -1999,7 +2022,7 @@ installRemoteModule() {
 			elif test $(compareVersions "$installRemoteModule_version" 4.2.6) -ge 0; then
 				# enable debug/trace log support?
 				addConfigureOption enable-debug-log no
-				#enable sockets supports?
+				# enable sockets supports?
 				addConfigureOption enable-sockets $installRemoteModule_sockets
 				# enable openssl support?
 				addConfigureOption enable-openssl $installRemoteModule_openssl
@@ -2012,7 +2035,7 @@ installRemoteModule() {
 			elif test $(compareVersions "$installRemoteModule_version" 4.2.0) -ge 0; then
 				# enable debug/trace log support?
 				addConfigureOption enable-debug-log no
-				#enable sockets supports?
+				# enable sockets supports?
 				addConfigureOption enable-sockets $installRemoteModule_sockets
 				# enable openssl support?
 				addConfigureOption enable-openssl $installRemoteModule_openssl
@@ -2027,7 +2050,7 @@ installRemoteModule() {
 			elif test $(compareVersions "$installRemoteModule_version" 2.1.2) -ge 0; then
 				# enable debug/trace log support?
 				addConfigureOption enable-swoole-debug no
-				#enable sockets supports?
+				# enable sockets supports?
 				addConfigureOption enable-sockets $installRemoteModule_sockets
 				# enable openssl support?
 				addConfigureOption enable-openssl $installRemoteModule_openssl
@@ -2042,7 +2065,7 @@ installRemoteModule() {
 			elif test $(compareVersions "$installRemoteModule_version" 1.10.4) -ge 0 && test $(compareVersions "$installRemoteModule_version" 1.10.5) -le 0; then
 				# enable debug/trace log support?
 				addConfigureOption enable-swoole-debug no
-				#enable sockets supports?
+				# enable sockets supports?
 				addConfigureOption enable-sockets $installRemoteModule_sockets
 				# enable openssl support?
 				addConfigureOption enable-openssl $installRemoteModule_openssl
@@ -2079,9 +2102,9 @@ installRemoteModule() {
 			;;
 		uopz)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=2.0.7
-				elif test $PHP_MAJMIN_VERSION -lt 701; then
+				elif test $PHP_MAJMIN_VERSION -le 700; then
 					installRemoteModule_version=5.0.2
 				fi
 			fi
@@ -2125,9 +2148,9 @@ installRemoteModule() {
 			;;
 		yaml)
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=1.3.1
-				elif test $PHP_MAJMIN_VERSION -lt 701; then
+				elif test $PHP_MAJMIN_VERSION -le 700; then
 					installRemoteModule_version=2.0.4
 				fi
 			fi
@@ -2170,10 +2193,10 @@ installRemoteModule() {
 					;;
 			esac
 			if test -z "$installRemoteModule_version"; then
-				if test $PHP_MAJMIN_VERSION -lt 700; then
+				if test $PHP_MAJMIN_VERSION -le 506; then
 					installRemoteModule_version=0.5.0
-				elif test $PHP_MAJMIN_VERSION -gt 702; then
-					installRemoteModule_version=0.7.2
+				elif test $PHP_MAJMIN_VERSION -ge 703; then
+					installRemoteModule_version=beta
 				fi
 			fi
 			;;
@@ -2291,19 +2314,14 @@ installPeclPackage() {
 		printf '\n' >"$CONFIGURE_FILE"
 	fi
 	installPeclPackage_name="$(getPeclModuleName "$1")"
+	if test -z "${2:-}"; then
+		installPeclPackage_fullname="$installPeclPackage_name"
+	else
+		installPeclPackage_fullname="$installPeclPackage_name-$2"
+	fi
 	if test $USE_PICKLE -eq 0; then
-		if test -z "${2:-}"; then
-			installPeclPackage_fullname="$installPeclPackage_name"
-		else
-			installPeclPackage_fullname="$installPeclPackage_name-$2"
-		fi
 		cat "$CONFIGURE_FILE" | MAKE="make -j$(getCompilationProcessorCount $1)" CPPFLAGS="${3:-}" pecl install "$installPeclPackage_fullname"
 	else
-		if test -z "${2:-}"; then
-			installPeclPackage_fullname="$installPeclPackage_name"
-		else
-			installPeclPackage_fullname="$installPeclPackage_name@$2"
-		fi
 		MAKE="make -j$(getCompilationProcessorCount $1)" CPPFLAGS="${3:-}" /tmp/pickle install --tmp-dir=/tmp/pickle.tmp --no-interaction --version-override='' --with-configure-options "$CONFIGURE_FILE" -- "$installPeclPackage_fullname"
 	fi
 }
@@ -2391,7 +2409,7 @@ cleanup() {
 		case "$DISTRO" in
 			debian)
 				printf '### RESTORING PREVIOUSLY INSTALLED PACKAGES ###\n'
-				DEBIAN_FRONTEND=noninteractive apt-get install --no-upgrade -qqy $PACKAGES_PREVIOUS
+				DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends --no-upgrade -qqy $PACKAGES_PREVIOUS
 				;;
 		esac
 	fi
@@ -2416,6 +2434,7 @@ mkdir -p /tmp/src
 mkdir -p /tmp/pickle.tmp
 IPE_ERRFLAG_FILE="$(mktemp -p /tmp/src)"
 CONFIGURE_FILE=/tmp/configure-options
+IPE_APK_FLAGS=''
 setDistro
 case "$DISTRO_VERSION" in
 	debian@8)
