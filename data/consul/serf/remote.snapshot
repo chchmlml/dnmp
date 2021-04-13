@@ -1,0 +1,11 @@
+alive: consul_Server1.dc1 172.19.0.2:8302
+alive: consulserver.dc1 172.19.0.2:8302
+alive: consulserver.dc1 172.19.0.4:8302
+alive: consulclient.dc1 172.19.0.7:8302
+clock: 2
+alive: consulserver.dc1 172.19.0.2:8302
+alive: consulserver.dc1 172.19.0.3:8302
+alive: consulserver.dc1 172.19.0.2:8302
+alive: consulserver.dc1 172.19.0.3:8302
+alive: consulclient.dc1 172.19.0.7:8302
+alive: consuls1.dc1 172.19.0.6:8302
