@@ -1,1 +1,1 @@
-[{"env":"prod","host":"rm22039.eos.grid.sina.com.cn","name":"rm22039.eos.grid.sina.com.cn","password":"","port":22039,"status":true},{"env":"local","host":"redis","name":"本地redis","password":"","port":6379,"status":true}]
+[{"env":"prod","host":"rm22039.eos.grid.sina.com.cn","name":"rm22039.eos.grid.sina.com.cn","password":"","port":22039,"status":true},{"env":"dev","host":"10.13.4.162","name":"10.13.4.162","password":"","port":6379,"status":true},{"env":"local","host":"redis","name":"本地redis","password":"","port":6379,"status":true}]

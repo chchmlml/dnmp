@@ -339,5 +339,20 @@ services:
 #    networks:
 #      - default
 
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    ports:
+      - "${PORTAINER_PORT_WEB}:9000"
+      - "${PORTAINER_PORT_SOCKET}:8000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DATA_DIR}/portainer:/data
+    restart: always
+    environment:
+      TZ: "$TZ"
+    networks:
+      - default
+
 networks:
   default:
