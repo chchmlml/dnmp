@@ -354,5 +354,14 @@ services:
     networks:
       - default
 
+  zookeeper:
+    image: zookeeper:latest
+    container_name: zookeeper
+    volumes:
+      - ${DATA_DIR}/zookeeper/data:/data
+      - ${DATA_DIR}/zookeeper/datalog:/datalog
+    ports:
+      - "2181:2181"
+
 networks:
   default:
