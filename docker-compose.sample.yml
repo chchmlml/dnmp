@@ -1,77 +1,84 @@
 version: "3"
 services:
-  nginx:
-    build:
-      context: ./services/nginx
-      args:
-        NGINX_VERSION: nginx:${NGINX_VERSION}
-        CONTAINER_PACKAGE_URL: ${CONTAINER_PACKAGE_URL}
-        NGINX_INSTALL_APPS: ${NGINX_INSTALL_APPS}
-    container_name: nginx
-    ports:
-      - "${NGINX_HTTP_HOST_PORT}:80"
-      - "${NGINX_HTTPS_HOST_PORT}:443"
-    volumes:
-      - ${SOURCE_DIR}:/www/:rw
-      - ${NGINX_SSL_CERTIFICATE_DIR}:/ssl:rw
-      - ${NGINX_CONFD_DIR}:/etc/nginx/conf.d/:rw
-      - ${NGINX_CONF_FILE}:/etc/nginx/nginx.conf:ro
-      - ${NGINX_FASTCGI_PHP_CONF}:/etc/nginx/fastcgi-php.conf:ro
-      - ${NGINX_FASTCGI_PARAMS}:/etc/nginx/fastcgi_params:ro
-      - ${NGINX_LOG_DIR}:/var/log/nginx/:rw
-    environment:
-      TZ: "$TZ"
-    restart: always
-    networks:
-      - default
+  # nginx:
+  #   build:
+  #     context: ./services/nginx
+  #     args:
+  #       NGINX_VERSION: nginx:${NGINX_VERSION}
+  #       CONTAINER_PACKAGE_URL: ${CONTAINER_PACKAGE_URL}
+  #       NGINX_INSTALL_APPS: ${NGINX_INSTALL_APPS}
+  #   container_name: nginx
+  #   depends_on:
+  #     - php56
+  #   ports:
+  #     - "${NGINX_HTTP_HOST_PORT}:80"
+  #     - "${NGINX_HTTPS_HOST_PORT}:443"
+  #   volumes:
+  #     - ${SOURCE_DIR}:/code/:rw
+  #     - ${NGINX_SSL_CERTIFICATE_DIR}:/ssl:rw
+  #     - ${NGINX_CONFD_DIR}:/etc/nginx/conf.d/:rw
+  #     - ${NGINX_CONF_FILE}:/etc/nginx/nginx.conf:ro
+  #     - ${NGINX_FASTCGI_PHP_CONF}:/etc/nginx/fastcgi-php.conf:ro
+  #     - ${NGINX_FASTCGI_PARAMS}:/etc/nginx/fastcgi_params:ro
+  #     - ${NGINX_LOG_DIR}:/var/log/nginx/:rw
+  #   environment:
+  #     TZ: "$TZ"
+  #   restart: always
+  #   networks:
+  #     - default
 
-  php:
+  # php:
+  #   build:
+  #     context: ./services/php
+  #     args:
+  #       PHP_VERSION: php:${PHP_VERSION}-fpm-alpine
+  #       CONTAINER_PACKAGE_URL: ${CONTAINER_PACKAGE_URL}
+  #       PHP_EXTENSIONS: ${PHP_EXTENSIONS}
+  #       TZ: "$TZ"
+  #   container_name: php
+  #   expose:
+  #     - 9701
+  #   ports:
+  #     - 9074:9000
+  #   # extra_hosts:
+  #   #   - "www.site1.com:172.17.0.1"
+  #   volumes:
+  #     - ${SOURCE_DIR}:${SOURCE_DIR}:rw
+  #     - ${PHP_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+  #     - ${PHP_FPM_CONF_FILE}:/usr/local/etc/php-fpm.d/www.conf:rw
+  #     - ${PHP_LOG_DIR}:/var/log/php
+  #     - ${DATA_DIR}/composer:/tmp/composer
+  #   restart: always
+  #   cap_add:
+  #     - SYS_PTRACE
+  #   networks:
+  #     - default
+
+  php56:
     build:
       context: ./services/php
       args:
-        PHP_VERSION: php:${PHP_VERSION}-fpm-alpine
+        PHP_VERSION: php:${PHP56_VERSION}-fpm-alpine
         CONTAINER_PACKAGE_URL: ${CONTAINER_PACKAGE_URL}
-        PHP_EXTENSIONS: ${PHP_EXTENSIONS}
+        PHP_EXTENSIONS: ${PHP56_EXTENSIONS}
         TZ: "$TZ"
-    container_name: php
+    container_name: php56
     expose:
       - 9501
-    extra_hosts:
-      - "www.site1.com:172.17.0.1"
+    ports:
+      - 9056:9000
+      - 9001:9001
     volumes:
-      - ${SOURCE_DIR}:/www/:rw
-      - ${PHP_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
-      - ${PHP_FPM_CONF_FILE}:/usr/local/etc/php-fpm.d/www.conf:rw
-      - ${PHP_LOG_DIR}:/var/log/php
+      - ${SOURCE_DIR}:${SOURCE_DIR}:rw
+      - ${PHP56_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
+      - ${PHP56_FPM_CONF_FILE}:/usr/local/etc/php-fpm.d/www.conf:rw
+      - ${PHP56_LOG_DIR}:/var/log/php
       - ${DATA_DIR}/composer:/tmp/composer
     restart: always
     cap_add:
       - SYS_PTRACE
     networks:
       - default
-
-#  php56:
-#    build:
-#      context: ./services/php
-#      args:
-#        PHP_VERSION: php:${PHP56_VERSION}-fpm-alpine
-#        CONTAINER_PACKAGE_URL: ${CONTAINER_PACKAGE_URL}
-#        PHP_EXTENSIONS: ${PHP56_EXTENSIONS}
-#        TZ: "$TZ"
-#    container_name: php56
-#    expose:
-#      - 9501
-#    volumes:
-#      - ${SOURCE_DIR}:/www/:rw
-#      - ${PHP56_PHP_CONF_FILE}:/usr/local/etc/php/php.ini:ro
-#      - ${PHP56_FPM_CONF_FILE}:/usr/local/etc/php-fpm.d/www.conf:rw
-#      - ${PHP56_LOG_DIR}:/var/log/php
-#      - ${DATA_DIR}/composer:/tmp/composer
-#    restart: always
-#    cap_add:
-#      - SYS_PTRACE
-#    networks:
-#      - default
 
 #  php54:
 #    build:
@@ -94,35 +101,35 @@ services:
 #    networks:
 #      - default
 
-  mysql:
-    image: mysql:${MYSQL_VERSION}
-    container_name: mysql
-    ports:
-      - "${MYSQL_HOST_PORT}:3306"
-    volumes:
-      - ${MYSQL_CONF_FILE}:/etc/mysql/conf.d/mysql.cnf:ro
-      - ${DATA_DIR}/mysql:/var/lib/mysql/:rw
-    restart: always
-    networks:
-      - default
-    environment:
-      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
-      TZ: "$TZ"
+  # mysql:
+  #   image: mysql:${MYSQL_VERSION}
+  #   container_name: mysql
+  #   ports:
+  #     - "${MYSQL_HOST_PORT}:3306"
+  #   volumes:
+  #     - ${MYSQL_CONF_FILE}:/etc/mysql/conf.d/mysql.cnf:ro
+  #     - ${DATA_DIR}/mysql:/var/lib/mysql/:rw
+  #   restart: always
+  #   networks:
+  #     - default
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+  #     TZ: "$TZ"
 
-#  mysql5:
-#    image: mysql:${MYSQL5_VERSION}
-#    container_name: mysql5
-#    ports:
-#      - "${MYSQL5_HOST_PORT}:3306"
-#    volumes:
-#      - ${MYSQL5_CONF_FILE}:/etc/mysql/conf.d/mysql.cnf:ro
-#      - ${DATA_DIR}/mysql5:/var/lib/mysql/:rw
-#    restart: always
-#    networks:
-#      - default
-#    environment:
-#      MYSQL_ROOT_PASSWORD: "${MYSQL5_ROOT_PASSWORD}"
-#      TZ: "$TZ"
+  mysql5:
+   image: mysql:${MYSQL5_VERSION}
+   container_name: mysql5
+   ports:
+     - "${MYSQL5_HOST_PORT}:3306"
+   volumes:
+     - ${MYSQL5_CONF_FILE}:/etc/mysql/conf.d/mysql.cnf:ro
+     - ${DATA_DIR}/mysql5:/var/lib/mysql/:rw
+   restart: always
+   networks:
+     - default
+   environment:
+     MYSQL_ROOT_PASSWORD: "${MYSQL5_ROOT_PASSWORD}"
+     TZ: "$TZ"
 
 #  openresty:
 #    image:  openresty/openresty:${OPENRESTY_VERSION}
@@ -143,30 +150,63 @@ services:
 #    networks:
 #      - default
 
-#  redis:
-#    image: redis:${REDIS_VERSION}
-#    container_name: redis
-#    ports:
-#      - "${REDIS_HOST_PORT}:6379"
+  redis:
+   image: redis:${REDIS_VERSION}
+   container_name: redis
+   ports:
+     - "${REDIS_HOST_PORT}:6379"
+   volumes:
+     - ${REDIS_CONF_FILE}:/etc/redis.conf:ro
+     - ${DATA_DIR}/redis:/data/:rw
+   restart: always
+   entrypoint: ["redis-server", "/etc/redis.conf"]
+   environment:
+     TZ: "$TZ"
+   networks:
+     - default
+
+  redisadmin:
+    build:
+      context: ./services/redisadmin
+    container_name: redisadmin
+    volumes:
+     - ${REDIS_ADMIN_CONF_FILE}:/conf/:rw
+    ports:
+     - "${REDIS_ADMIN_PORT}:8081"
+    restart: always
+    environment:
+     TZ: "$TZ"
+    networks:
+     - default
+
+#  consuls1:
+#    image: consul:latest
+#    container_name: consuls1
 #    volumes:
-#      - ${REDIS_CONF_FILE}:/etc/redis.conf:ro
-#      - ${DATA_DIR}/redis:/data/:rw
-#    restart: always
-#    entrypoint: ["redis-server", "/etc/redis.conf"]
-#    environment:
-#      TZ: "$TZ"
+#      -  ${DATA_DIR}/consul:/consul/data
+#      -  ${DATA_DIR}/consul:/consul/config
+#    ports:
+#      - 8300:8300
+#      - 8301:8301
+#      - 8301:8301/udp
+#      - 8302:8302
+#      - 8302:8302/udp
+#      - 8400:8400
+#      - 8500:8500
+#      - 53:53/udp
+#    command: agent -server -client=0.0.0.0 -node=consuls1 -bootstrap-expect=1 -ui
 #    networks:
 #      - default
 
-#  memcached:
-#    image: memcached:${MEMCACHED_VERSION}
-#    container_name: memcached
-#    ports:
-#      - "${MEMCACHED_HOST_PORT}:11211"
-#    environment:
-#       MEMCACHED_CACHE_SIZE: "${MEMCACHED_CACHE_SIZE}"
-#    networks:
-#      - default
+  # memcached:
+  #  image: memcached:${MEMCACHED_VERSION}
+  #  container_name: memcached
+  #  ports:
+  #    - "${MEMCACHED_HOST_PORT}:11211"
+  #  environment:
+  #     MEMCACHED_CACHE_SIZE: "${MEMCACHED_CACHE_SIZE}"
+  #  networks:
+  #    - default
 
 #  rabbitmq:
 #    image: rabbitmq:${RABBITMQ_VERSION}
@@ -182,46 +222,33 @@ services:
 #    networks:
 #          - default
 
-#  phpmyadmin:
-#    image: phpmyadmin/phpmyadmin:latest
-#    container_name: phpmyadmin
-#    ports:
-#      - "${PHPMYADMIN_HOST_PORT}:80"
-#    volumes:
-#      - ${PHPMYADMIN_USER_CONF_FILE}:/etc/phpmyadmin/config.user.inc.php:ro
-#      - ${PHPMYADMIN_PHP_CONF_FILE}:/usr/local/etc/php/conf.d/php-phpmyadmin.ini:ro
-#    networks:
-#      - default
-#    environment:
-#      - PMA_HOST=mysql
-#      - PMA_PORT=3306
-#      - TZ=$TZ
-
-#  phpredisadmin:
-#    image: erikdubbelboer/phpredisadmin:latest
-#    container_name: phpredisadmin
-#    ports:
-#      - "${REDISMYADMIN_HOST_PORT}:80"
-#    networks:
-#      - default
-#    environment:
-#      - REDIS_1_HOST=redis
-#      - REDIS_1_PORT=6379
-#      - TZ=$TZ
-
-  # redisadmin:
-  #   build:
-  #     context: ./services/redisadmin
-  #   container_name: redisadmin
-  #   volumes:
-  #    - ${REDIS_ADMIN_CONF_FILE}:/conf/:rw
-  #   ports:
-  #    - "${REDIS_ADMIN_PORT}:8081"
-  #   restart: always
-  #   environment:
-  #    TZ: "$TZ"
-  #   networks:
+  # phpmyadmin:
+  #  image: phpmyadmin/phpmyadmin:latest
+  #  container_name: phpmyadmin
+  #  ports:
+  #    - "${PHPMYADMIN_HOST_PORT}:80"
+  #  volumes:
+  #    - ${PHPMYADMIN_USER_CONF_FILE}:/etc/phpmyadmin/config.user.inc.php:ro
+  #    - ${PHPMYADMIN_PHP_CONF_FILE}:/usr/local/etc/php/conf.d/php-phpmyadmin.ini:ro
+  #  networks:
   #    - default
+  #  environment:
+  #    - TZ=$TZ
+
+  # phpredisadmin:
+  #  image: erikdubbelboer/phpredisadmin:latest
+  #  container_name: phpredisadmin
+  #  ports:
+  #    - "${REDISMYADMIN_HOST_PORT}:80"
+  #  networks:
+  #    - default
+  #  environment:
+  #    - REDIS_1_HOST=10.222.101.182
+  #    - REDIS_1_PORT=6379
+  #    - REDIS_1_FILTER=CC*
+  #    - REDIS_2_HOST=rm22039.eos.grid.sina.com.cn
+  #    - REDIS_2_PORT=22039
+  #    - TZ=$TZ
 
 #  mongodb:
 #    image: mongo:${MONGODB_VERSION}
@@ -362,6 +389,18 @@ services:
       - ${DATA_DIR}/zookeeper/datalog:/datalog
     ports:
       - "2181:2181"
+
+  kafka:
+    image: wurstmeister/kafka
+    container_name: kafka
+    ports:
+      - 9092:9092
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
   default:
